@@ -102,5 +102,4 @@ uvicorn main:app --reload
 7. Model fine-tuning & scaling
 
 
-
-Do you want me to also make a **more detailed README** with screenshots, API usage examples, and setup instructions for **Docker deployment**? That would make it more developer-friendly.
+Copyright [2025] [Anirban Sarkar , Trina Das , Samanjan Sarkar , Ankan Palai]
