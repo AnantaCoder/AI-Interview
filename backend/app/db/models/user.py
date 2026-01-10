@@ -9,6 +9,7 @@ from app.db.models.base import BaseModel
 class UserType(str, enum.Enum):
     ORGANIZATION = "organization"
     CANDIDATE = "candidate"
+    ADMIN = "admin"
 
 
 class User(BaseModel):

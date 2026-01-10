@@ -72,7 +72,7 @@ async def signout(request: Request) -> ApiResponse:
     description="Generate Google OAuth authorization URL for signup/signin."
 )
 async def google_auth_url(
-    user_type: str = Query(..., description="User type: organization or candidate")
+    user_type: str = Query(..., description="User type: organization, candidate or admin")
 ) -> GoogleAuthUrlResponse:
     settings = get_settings()
     
