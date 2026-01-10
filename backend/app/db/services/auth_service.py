@@ -48,7 +48,7 @@ class AuthService:
                 contact_email=request.email
             )
             db.add(org)
-        else:
+        elif request.user_type == "candidate":
             candidate = Candidate(
                 user_id=user.id,
                 email=request.email,

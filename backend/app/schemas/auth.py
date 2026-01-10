@@ -9,7 +9,7 @@ from app.schemas.base import AppBaseModel, TimestampMixin
 class SignUpRequest(AppBaseModel):
     email: EmailStr = Field(..., description="User email address")
     password: str = Field(..., min_length=8, description="Password (min 8 characters)")
-    user_type: Literal["organization", "candidate"] = Field(..., description="Type of user")
+    user_type: Literal["organization", "candidate", "admin"] = Field(..., description="Type of user")
     full_name: Optional[str] = Field(default=None, description="Full name of the user")
 
 
@@ -19,7 +19,7 @@ class SignInRequest(AppBaseModel):
 
 
 class GoogleAuthRequest(AppBaseModel):
-    user_type: Literal["organization", "candidate"] = Field(..., description="Type of user for Google signup")
+    user_type: Literal["organization", "candidate", "admin"] = Field(..., description="Type of user for Google signup")
 
 
 class TokenResponse(AppBaseModel):
@@ -33,7 +33,7 @@ class TokenResponse(AppBaseModel):
 class UserProfile(AppBaseModel, TimestampMixin):
     id: UUID
     email: EmailStr
-    user_type: Literal["organization", "candidate"]
+    user_type: Literal["organization", "candidate", "admin"]
     full_name: Optional[str] = None
     avatar_url: Optional[str] = None
     email_confirmed_at: Optional[datetime] = None
