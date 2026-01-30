@@ -73,13 +73,33 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.close()
 
 
-async def init_db() -> None:
+async def create_tables() -> None:
+    """Create all tables in the database from SQLAlchemy models."""
+    # Import all models to register them with Base
+    from app.db.models import User, Organization, Candidate, JobRole, Interview, InterviewQuestion, InterviewResponse
+    
+    logger.info("Creating database tables...")
+    try:
+        engine = get_engine()
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Failed to create tables: {e}")
+        raise
+
+
+async def init_db(create_tables_on_startup: bool = True) -> None:
     logger.info("Initializing database connection...")
     try:
         engine = get_engine()
         async with engine.begin() as conn:
             pass
         logger.info("Database connection established")
+        
+        # Create tables if they don't exist
+        if create_tables_on_startup:
+            await create_tables()
     except Exception as e:
         logger.warning(f"Database connection failed: {e}")
 
