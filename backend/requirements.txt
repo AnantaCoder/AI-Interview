@@ -10,7 +10,6 @@ email-validator>=2.0.0
 # SQLAlchemy ORM
 sqlalchemy[asyncio]>=2.0.0
 asyncpg>=0.29.0
-alembic>=1.13.0
 
 # HTTP client for Supabase Auth
 httpx>=0.26.0
