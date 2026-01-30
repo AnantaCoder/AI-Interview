@@ -33,8 +33,25 @@ class Settings(BaseSettings):
     google_client_secret: Optional[str] = Field(default=None)
     google_redirect_uri: str = Field(default="http://localhost:8000/api/v1/auth/callback/google")
 
+    # jwt
+    jwt_secret: str = Field(default="your-secret-key", description="Secret key for JWT tokens")
+    jwt_algorithm: str = Field(default="HS256")
+    access_token_expire_minutes: int = Field(default=30)
+
 
 @lru_cache()
 def get_settings() -> Settings:
     return Settings()
 
+
+if __name__ == "__main__":
+    s = get_settings()
+    print("--- Loaded Settings ---")
+    print("Database URL:", s.database_url)
+    print("Supabase URL:", s.supabase_url)
+    print("Supabase Anon Key:", s.supabase_anon_key)
+    print("Supabase Service Role Key:", s.supabase_service_role_key)
+    print("Google Client ID:", s.google_client_id)
+    print("Google Client Secret:", s.google_client_secret)
+    print("JWT Secret:", s.jwt_secret)
+    print("-----------------------")

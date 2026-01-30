@@ -12,38 +12,26 @@ router = APIRouter(prefix="/health", tags=["Health"])
     "",
     response_model=HealthResponse,
     summary="Basic health check",
-    description="Returns the basic health status of the API service."
+    description="Returns the basic health status of the API service including database connectivity."
 )
 async def health_check() -> HealthResponse:
     settings = get_settings()
-    return HealthResponse(
-        status="healthy",
-        version=settings.app_version
-    )
-
-
-@router.get(
-    "/db",
-    response_model=HealthResponse,
-    summary="Database health check",
-    description="Checks the database connectivity and returns the status."
-)
-async def database_health_check() -> HealthResponse:
-    settings = get_settings()
     
+    # Check database connection
     try:
         engine = get_engine()
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
         db_status = "connected"
-        status = "healthy"
-    except Exception as e:
-        db_status = f"disconnected: {str(e)}"
-        status = "unhealthy"
+    except Exception:
+        db_status = "disconnected"
     
     return HealthResponse(
-        status=status,
+        status="healthy",
         version=settings.app_version,
         database=db_status
     )
+
+
+
 
