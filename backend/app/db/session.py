@@ -14,14 +14,11 @@ _async_session_maker = None
 
 
 def get_database_url() -> str:
+    """Get PostgreSQL database URL with asyncpg driver."""
     settings = get_settings()
     database_url = settings.database_url
     
-    # Use aiosqlite for SQLite (local dev)
-    if database_url.startswith("sqlite"):
-        return database_url.replace("sqlite://", "sqlite+aiosqlite://", 1)
-    
-    # Convert postgres:// to postgresql+asyncpg://
+    # Convert postgres:// or postgresql:// to postgresql+asyncpg://
     if database_url.startswith("postgres://"):
         return database_url.replace("postgres://", "postgresql+asyncpg://", 1)
     elif database_url.startswith("postgresql://") and "+asyncpg" not in database_url:
@@ -39,7 +36,7 @@ def get_engine():
         _engine = create_async_engine(
             database_url,
             echo=settings.debug,
-            pool_pre_ping=True if "postgresql" in database_url else False,
+            pool_pre_ping=True,
         )
         logger.info(f"Database engine created for: {database_url.split('@')[-1] if '@' in database_url else 'local'}")
     return _engine

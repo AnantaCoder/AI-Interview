@@ -16,8 +16,8 @@ class Settings(BaseSettings):
     app_version: str = Field(default="1.0.0")
     debug: bool = Field(default=False)
     
-    # Database - Use SQLite for local dev, PostgreSQL for production
-    database_url: str = Field(default="sqlite:///./ai_interview.db")
+    # Database - Supabase PostgreSQL (required)
+    database_url: str = Field(..., description="Supabase PostgreSQL connection string")
     
     # Supabase Auth (for OAuth and user management)
     supabase_url: str = Field(default="https://example.supabase.co")

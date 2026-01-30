@@ -1,15 +1,9 @@
 from typing import Optional
 from uuid import UUID
-from datetime import datetime
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from passlib.context import CryptContext
 
 from app.db.connection import get_async_supabase_client
-from app.db.models.user import User, UserType
-from app.db.models.organization import Organization
-from app.db.models.candidate import Candidate
 from app.config.logging import get_logger
 from app.schemas.auth import (
     SignUpRequest, SignInRequest, AuthResponse, 
@@ -27,40 +21,6 @@ class AuthService:
     
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         return pwd_context.verify(plain_password, hashed_password)
-    
-    async def create_local_user(self, db: AsyncSession, request: SignUpRequest, supabase_id: str) -> User:
-        user = User(
-            id=UUID(supabase_id),
-            email=request.email,
-            password_hash=self.hash_password(request.password),
-            full_name=request.full_name,
-            user_type=UserType(request.user_type),
-            provider="email"
-        )
-        db.add(user)
-        await db.flush()
-        
-        # Create corresponding profile
-        if request.user_type == "organization":
-            org = Organization(
-                user_id=user.id,
-                name=request.full_name or "My Organization",
-                contact_email=request.email
-            )
-            db.add(org)
-        elif request.user_type == "candidate":
-            candidate = Candidate(
-                user_id=user.id,
-                email=request.email,
-                full_name=request.full_name or "Candidate"
-            )
-            db.add(candidate)
-        
-        await db.commit()
-        await db.refresh(user)
-        
-        logger.info(f"Local user created: {request.email}")
-        return user
     
     async def sign_up(self, request: SignUpRequest) -> AuthResponse:
         client = await get_async_supabase_client()
