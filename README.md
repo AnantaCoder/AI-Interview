@@ -57,7 +57,9 @@ cd <project-folder>
 cd frontend
 npm install
 
-# Backend
+# 
+py -m venv env 
+env/Scripts/activate 
 cd ../backend
 pip install -r requirements.txt
 ```
