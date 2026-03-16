@@ -1,5 +1,4 @@
-from sqlalchemy import Column, String, Enum
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String
 from sqlalchemy.orm import relationship
 import enum
 
@@ -19,7 +18,7 @@ class User(BaseModel):
     password_hash = Column(String(255), nullable=True)  # Nullable for OAuth users
     full_name = Column(String(255), nullable=True)
     avatar_url = Column(String(500), nullable=True)
-    user_type = Column(Enum(UserType), nullable=False)
+    user_type = Column(String(20), nullable=False)
     
     # OAuth fields
     provider = Column(String(50), nullable=True)  # google, email, etc.

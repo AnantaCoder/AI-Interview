@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator
 
 from app.config.settings import get_settings
 from app.config.logging import get_logger
@@ -14,16 +14,29 @@ _async_session_maker = None
 
 
 def get_database_url() -> str:
-    """Get PostgreSQL database URL with asyncpg driver."""
+    """
+    Convert the DATABASE_URL to an async-compatible connection string.
+    
+    Supports:
+      - sqlite:// → sqlite+aiosqlite://
+      - postgres:// → postgresql+asyncpg://
+      - postgresql:// → postgresql+asyncpg://
+    """
     settings = get_settings()
     database_url = settings.database_url
-    
-    # Convert postgres:// or postgresql:// to postgresql+asyncpg://
+
+    # SQLite
+    if database_url.startswith("sqlite://"):
+        if "+aiosqlite" not in database_url:
+            return database_url.replace("sqlite://", "sqlite+aiosqlite://", 1)
+        return database_url
+
+    # PostgreSQL
     if database_url.startswith("postgres://"):
         return database_url.replace("postgres://", "postgresql+asyncpg://", 1)
-    elif database_url.startswith("postgresql://") and "+asyncpg" not in database_url:
+    if database_url.startswith("postgresql://") and "+asyncpg" not in database_url:
         return database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-    
+
     return database_url
 
 
@@ -33,12 +46,23 @@ def get_engine():
         settings = get_settings()
         database_url = get_database_url()
         
+        # SQLite requires special handling
+        connect_args = {}
+        if "sqlite" in database_url:
+            connect_args["check_same_thread"] = False
+        
         _engine = create_async_engine(
             database_url,
             echo=settings.debug,
-            pool_pre_ping=True,
+            pool_pre_ping=True if "sqlite" not in database_url else False,
+            connect_args=connect_args,
         )
-        logger.info(f"Database engine created for: {database_url.split('@')[-1] if '@' in database_url else 'local'}")
+        # Log only the host portion for security
+        if "@" in database_url:
+            safe_url = database_url.split("@")[-1]
+        else:
+            safe_url = database_url.split("///")[-1] if "///" in database_url else database_url
+        logger.info(f"Database engine created for: {safe_url}")
     return _engine
 
 
@@ -50,14 +74,9 @@ def get_session_maker():
             class_=AsyncSession,
             expire_on_commit=False,
             autocommit=False,
-            autoflush=False
+            autoflush=False,
         )
     return _async_session_maker
-
-
-# For backwards compatibility
-engine = property(lambda self: get_engine())
-AsyncSessionLocal = property(lambda self: get_session_maker())
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -77,7 +96,7 @@ async def create_tables() -> None:
     """Create all tables in the database from SQLAlchemy models."""
     # Import all models to register them with Base
     from app.db.models import User, Organization, Candidate, JobRole, Interview, InterviewQuestion, InterviewResponse
-    
+
     logger.info("Creating database tables...")
     try:
         engine = get_engine()
@@ -96,7 +115,7 @@ async def init_db(create_tables_on_startup: bool = True) -> None:
         async with engine.begin() as conn:
             pass
         logger.info("Database connection established")
-        
+
         # Create tables if they don't exist
         if create_tables_on_startup:
             await create_tables()

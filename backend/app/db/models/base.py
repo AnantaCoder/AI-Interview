@@ -1,5 +1,4 @@
-from sqlalchemy import Column, DateTime, Boolean
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, DateTime, Boolean, String
 from sqlalchemy.sql import func
 from datetime import datetime
 import uuid
@@ -20,7 +19,8 @@ class SoftDeleteMixin:
 class BaseModel(Base, TimestampMixin, SoftDeleteMixin):
     __abstract__ = True
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # Use String(36) for UUID — works on both SQLite and PostgreSQL
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     
     def to_dict(self) -> dict:
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}

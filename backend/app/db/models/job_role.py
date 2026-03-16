@@ -1,5 +1,4 @@
-from sqlalchemy import Column, String, Text, Integer, Boolean, Float, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+from sqlalchemy import Column, String, Text, Integer, Boolean, Float, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 
 from app.db.models.base import BaseModel
@@ -8,11 +7,11 @@ from app.db.models.base import BaseModel
 class JobRole(BaseModel):
     __tablename__ = "job_roles"
     
-    organization_id = Column(UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
-    required_skills = Column(ARRAY(String), default=[])
-    preferred_skills = Column(ARRAY(String), default=[])
+    required_skills = Column(JSON, default=[])
+    preferred_skills = Column(JSON, default=[])
     min_experience_years = Column(Integer, default=0)
     max_experience_years = Column(Integer, nullable=True)
     education_requirement = Column(String(255), nullable=True)
@@ -20,12 +19,12 @@ class JobRole(BaseModel):
     salary_range_max = Column(Integer, nullable=True)
     location = Column(String(255), nullable=True)
     is_remote = Column(Boolean, default=False)
-    cutoff_score = Column(Float, default=60.0)  # Score threshold for shortlisting
+    cutoff_score = Column(Float, default=60.0)
     
     # Relationships
     organization = relationship("Organization", back_populates="job_roles")
-    interviews = relationship("Interview", back_populates="job_role", lazy="dynamic")
-    questions = relationship("InterviewQuestion", back_populates="job_role", lazy="dynamic")
+    interviews = relationship("Interview", back_populates="job_role")
+    questions = relationship("InterviewQuestion", back_populates="job_role")
     
     def __repr__(self) -> str:
         return f"<JobRole(id={self.id}, title={self.title})>"

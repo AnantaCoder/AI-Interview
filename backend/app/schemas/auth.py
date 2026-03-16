@@ -1,6 +1,5 @@
 from pydantic import EmailStr, Field
 from typing import Optional, Literal
-from uuid import UUID
 from datetime import datetime
 
 from app.schemas.base import AppBaseModel, TimestampMixin
@@ -31,7 +30,7 @@ class TokenResponse(AppBaseModel):
 
 
 class UserProfile(AppBaseModel, TimestampMixin):
-    id: UUID
+    id: str = Field(..., description="User UUID")
     email: EmailStr
     user_type: Literal["organization", "candidate", "admin"]
     full_name: Optional[str] = None
