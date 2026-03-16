@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     jwt_secret: str = Field(default="your-secret-key", description="Secret key for JWT tokens")
     jwt_algorithm: str = Field(default="HS256")
     access_token_expire_minutes: int = Field(default=30)
+    refresh_token_expire_days: int = Field(default=7)
 
 
 @lru_cache()
