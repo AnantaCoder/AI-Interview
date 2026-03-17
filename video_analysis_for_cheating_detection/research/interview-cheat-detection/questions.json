@@ -1,0 +1,22 @@
+[
+    {
+        "question": "Can you explain the difference between supervised and unsupervised learning?",
+        "answer": "Supervised learning uses labeled data to train models, while unsupervised learning uses unlabeled data to find patterns."
+    },
+    {
+        "question": "What is overfitting, and how can you prevent it?",
+        "answer": "Overfitting occurs when a model learns the training data too well, including noise. It can be prevented by using techniques like cross-validation, regularization, and pruning."
+    },
+    {
+        "question": "What is a confusion matrix, and why is it useful?",
+        "answer": "A confusion matrix is a table used to evaluate the performance of a classification model. It shows true positives, true negatives, false positives, and false negatives."
+    },
+    {
+        "question": "What is the bias-variance tradeoff?",
+        "answer": "The bias-variance tradeoff refers to the balance between a model's ability to minimize bias (error due to assumptions) and variance (error due to sensitivity to small fluctuations in the training set)."
+    },
+    {
+        "question": "Can you explain the concept of gradient descent?",
+        "answer": "Gradient descent is an optimization algorithm used to minimize a function by iteratively moving in the direction of the steepest descent, as defined by the negative of the gradient."
+    }
+]

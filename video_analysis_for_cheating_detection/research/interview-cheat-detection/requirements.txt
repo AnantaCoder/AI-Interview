@@ -1,0 +1,12 @@
+openai
+streamlit
+audio_recorder_streamlit
+SpeechRecognition
+scikit-learn
+torch
+pandas
+dlib
+opencv-python
+python-dotenv
+sentence-transformers
+scipy

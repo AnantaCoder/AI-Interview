@@ -1,0 +1,6 @@
+1. attentive ness or not in this system we can use gaze tracking
+2. case a head position in tilted at righjt and left at 45 like degrees we can use head pose estimation
+3. and screen er down level for the chearing detection 
+4. change the chearing detection to confidance level score 
+5. add a proper scoring and questions system 
+6. create a proper flow of the system 
