@@ -208,3 +208,5 @@ __marimo__/
 
 *.db
 jobs_dataset_with_features.csv
+clear_resume_data.csv
+machine_learning/clean_resume_data.csv
