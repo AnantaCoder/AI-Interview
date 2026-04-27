@@ -6,7 +6,7 @@ from app.schemas.auth import (
     SignUpRequest, SignInRequest, AuthResponse,
     GoogleAuthRequest, GoogleAuthUrlResponse, TokenResponse,
     RefreshTokenRequest, PasswordResetRequest, PasswordUpdateRequest,
-    UserProfile,
+    UserProfile, UserProfileUpdate,
 )
 from app.schemas.responses import ApiResponse
 from app.config.settings import get_settings
@@ -132,6 +132,25 @@ async def get_me(
     user: UserProfile = Depends(get_current_user),
 ) -> UserProfile:
     return user
+
+
+@router.patch(
+    "/me",
+    response_model=UserProfile,
+    summary="Update current user profile",
+    description="Update the profile of the currently authenticated user.",
+)
+async def update_me(
+    update_data: UserProfileUpdate,
+    user: UserProfile = Depends(get_current_user),
+) -> UserProfile:
+    try:
+        return await auth_service.update_profile(user.id, update_data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Profile update failed: {e}")
+        raise HTTPException(status_code=500, detail="Profile update failed due to an internal error")
 
 
 @router.post(

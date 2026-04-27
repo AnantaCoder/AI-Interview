@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String
+from sqlalchemy import Column, String, Boolean, JSON, Integer
 from sqlalchemy.orm import relationship
 import enum
 
@@ -19,6 +19,14 @@ class User(BaseModel):
     full_name = Column(String(255), nullable=True)
     avatar_url = Column(String(500), nullable=True)
     user_type = Column(String(20), nullable=False)
+    
+    # Profile Extensions
+    address = Column(String(500), nullable=True)
+    phone_number = Column(String(20), nullable=True)
+    is_active = Column(Boolean, default=True)
+    skills = Column(JSON, default=[])
+    job_role = Column(String(255), nullable=True)
+    year_of_experience = Column(Integer, default=0)
     
     # OAuth fields
     provider = Column(String(50), nullable=True)  # google, email, etc.

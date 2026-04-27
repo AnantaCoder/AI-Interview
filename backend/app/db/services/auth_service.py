@@ -25,6 +25,7 @@ from app.schemas.auth import (
     SignInRequest,
     AuthResponse,
     UserProfile,
+    UserProfileUpdate,
     TokenResponse,
 )
 
@@ -69,6 +70,12 @@ class AuthService:
             full_name=user.full_name,
             avatar_url=user.avatar_url,
             email_confirmed_at=None,
+            address=user.address,
+            phone_number=user.phone_number,
+            is_active=user.is_active,
+            skills=user.skills,
+            job_role=user.job_role,
+            year_of_experience=user.year_of_experience,
             created_at=user.created_at,
             updated_at=user.updated_at,
         )
@@ -168,6 +175,25 @@ class AuthService:
             if user is None:
                 return None
 
+            return self._user_to_profile(user)
+
+    async def update_profile(self, user_id: str, update_data: UserProfileUpdate) -> UserProfile:
+        session_maker = get_session_maker()
+        async with session_maker() as session:
+            result = await session.execute(
+                select(User).where(User.id == user_id)
+            )
+            user = result.scalar_one_or_none()
+            if user is None:
+                raise ValueError("User not found")
+                
+            update_dict = update_data.model_dump(exclude_unset=True)
+            for key, value in update_dict.items():
+                setattr(user, key, value)
+                
+            await session.commit()
+            await session.refresh(user)
+            logger.info(f"User profile updated: {user_id}")
             return self._user_to_profile(user)
 
     async def reset_password(self, email: str, redirect_url: str) -> bool:

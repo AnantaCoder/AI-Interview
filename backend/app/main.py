@@ -1,13 +1,12 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI , Request
 from fastapi.middleware.cors import CORSMiddleware
-
 from app.config.settings import get_settings
 from app.config.logging import setup_logging, get_logger
 from app.db.session import init_db, close_db
 from app.exceptions.handlers import register_exception_handlers
 from app.routers import health, auth, resume, ats
-
+import time
 logger = get_logger("main")
 
 
@@ -59,7 +58,27 @@ def create_app() -> FastAPI:
             "version": settings.app_version,
             "docs": "/docs"
         }
-    
+    # --- Request Logging Middleware ---
+   
+    @app.middleware("http")
+    async def log_requests(request: Request, call_next):
+        start_time = time.time()
+        # We don't want to log the health check endpoint repeatedly
+        is_health = request.url.path == "/api/v1/health"
+        if not is_health:
+            logger.info(f"--> {request.method} {request.url.path}")
+        try:
+            response = await call_next(request)
+            process_time = (time.time() - start_time) * 1000
+            if not is_health:
+                status_color = "🟢" if 200 <= response.status_code < 300 else ("🟡" if 300 <= response.status_code < 400 else "🔴")
+                logger.info(f"<-- {status_color} {request.method} {request.url.path} [{response.status_code}] - {process_time:.2f}ms")
+            return response
+        except Exception as e:
+            process_time = (time.time() - start_time) * 1000
+            if not is_health:
+                logger.error(f"<-- 🔴 {request.method} {request.url.path} [500] - {process_time:.2f}ms - Error: {str(e)}")
+            raise e
     return app
 
 

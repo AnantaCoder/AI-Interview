@@ -36,7 +36,23 @@ class UserProfile(AppBaseModel, TimestampMixin):
     full_name: Optional[str] = None
     avatar_url: Optional[str] = None
     email_confirmed_at: Optional[datetime] = None
+    address: Optional[str] = None
+    phone_number: Optional[str] = None
+    is_active: Optional[bool] = None
+    skills: Optional[list[str]] = None
+    job_role: Optional[str] = None
+    year_of_experience: Optional[int] = None
+    
 
+
+class UserProfileUpdate(AppBaseModel):
+    full_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    address: Optional[str] = None
+    phone_number: Optional[str] = None
+    skills: Optional[list[str]] = None
+    job_role: Optional[str] = None
+    year_of_experience: Optional[int] = None
 
 class AuthResponse(AppBaseModel):
     user: UserProfile

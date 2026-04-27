@@ -13,48 +13,57 @@ _engine = None
 _async_session_maker = None
 
 
-def get_database_url() -> str:
+def get_database_url() -> tuple[str, dict]:
     """
-    Convert the DATABASE_URL to an async-compatible connection string.
-    
-    Supports:
+    Convert the DATABASE_URL to an async-compatible connection string and
+    return (url, connect_args) so callers can pass driver-specific options.
+
+    Handles:
       - sqlite:// → sqlite+aiosqlite://
-      - postgres:// → postgresql+asyncpg://
-      - postgresql:// → postgresql+asyncpg://
+      - postgres:// / postgresql:// → postgresql+asyncpg://
+      - Strips ?sslmode=require from Neon/Postgres URLs and returns
+        connect_args={"ssl": "require"} instead (asyncpg doesn't accept
+        sslmode as a query parameter).
     """
     settings = get_settings()
     database_url = settings.database_url
+    connect_args: dict = {}
 
     # SQLite
     if database_url.startswith("sqlite://"):
         if "+aiosqlite" not in database_url:
-            return database_url.replace("sqlite://", "sqlite+aiosqlite://", 1)
-        return database_url
+            database_url = database_url.replace("sqlite://", "sqlite+aiosqlite://", 1)
+        connect_args["check_same_thread"] = False
+        return database_url, connect_args
 
-    # PostgreSQL
+    # PostgreSQL – normalise scheme
     if database_url.startswith("postgres://"):
-        return database_url.replace("postgres://", "postgresql+asyncpg://", 1)
-    if database_url.startswith("postgresql://") and "+asyncpg" not in database_url:
-        return database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif database_url.startswith("postgresql://") and "+asyncpg" not in database_url:
+        database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-    return database_url
+    # asyncpg cannot parse ?sslmode=… — strip it and pass via connect_args
+    if "sslmode=require" in database_url:
+        database_url = database_url.replace("?sslmode=require", "").replace("&sslmode=require", "")
+        connect_args["ssl"] = "require"
+    elif "sslmode=" in database_url:
+        import re
+        database_url = re.sub(r"[?&]sslmode=[^&]*", "", database_url)
+
+    return database_url, connect_args
 
 
 def get_engine():
     global _engine
     if _engine is None:
         settings = get_settings()
-        database_url = get_database_url()
-        
-        # SQLite requires special handling
-        connect_args = {}
-        if "sqlite" in database_url:
-            connect_args["check_same_thread"] = False
-        
+        database_url, connect_args = get_database_url()
+        is_sqlite = "sqlite" in database_url
+
         _engine = create_async_engine(
             database_url,
             echo=settings.debug,
-            pool_pre_ping=True if "sqlite" not in database_url else False,
+            pool_pre_ping=not is_sqlite,
             connect_args=connect_args,
         )
         # Log only the host portion for security
