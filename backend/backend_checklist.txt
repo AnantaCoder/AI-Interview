@@ -1,0 +1,34 @@
+# Backend Implementation Checklist
+
+This checklist outlines the remaining backend endpoints and features required to fully integrate the Organization, Candidate, and Admin roles based on your database models.
+
+## 1. Candidate Features (Router: `routers/candidate.py`)
+- [ ] `GET /api/v1/candidate/profile` - Fetch the authenticated candidate's profile data (experience, skills, links).
+- [ ] `PUT /api/v1/candidate/profile` - Update candidate profile fields.
+- [ ] `POST /api/v1/candidate/resume/upload` - Upload a resume file, trigger the `ats.py`/`resume.py` AI parsers to automatically populate the candidate's skills, education, and ATS category.
+- [ ] `GET /api/v1/candidate/applications` - Fetch a list of campaigns the candidate has applied for and their current status (Pending, Interviewing, Completed).
+
+## 2. Organization & Campaign Expansion (Router: `routers/organization.py` & `campaign.py`)
+- [ ] `GET /api/v1/organization/profile` - Fetch organization details.
+- [ ] `PUT /api/v1/organization/profile` - Update organization details (logo, website, description).
+- [ ] `POST /api/v1/campaigns/{id}/apply` - Allow a Candidate to apply to a campaign (This creates an `Interview` record in `PENDING` state).
+- [ ] `GET /api/v1/campaigns/{id}/applicants` - Allow Organizations to fetch all candidates who applied to a specific campaign, sorted by ATS score.
+- [ ] `PATCH /api/v1/campaigns/{id}/applicants/{candidate_id}/status` - Allow Organizations to shortlist or reject a candidate.
+
+## 3. Interview Workflow (Router: `routers/interview.py`)
+- [ ] `GET /api/v1/interviews/` - Fetch all interviews (Filters dynamically based on whether the requester is a Candidate or an Organization).
+- [ ] `POST /api/v1/interviews/{id}/start` - Candidate initiates the interview (Updates status to `IN_PROGRESS` and sets `started_at`).
+- [ ] `GET /api/v1/interviews/{id}/questions` - Fetch the list of AI-generated or manually added questions for the role.
+- [ ] `POST /api/v1/interviews/{id}/responses` - Candidate submits video/audio/text response for a specific question (Saves to `InterviewResponse`).
+- [ ] `POST /api/v1/interviews/{id}/complete` - Candidate finishes the interview (Updates status to `COMPLETED`, sets `completed_at`, and triggers the AI to calculate the final interview score).
+- [ ] `GET /api/v1/interviews/{id}/results` - Fetch the detailed AI feedback, cheating detection flags, and individual question scores.
+
+## 4. Admin Panel (Router: `routers/admin.py`)
+- [ ] `GET /api/v1/admin/users` - Fetch a paginated list of all users on the platform (Candidates, Organizations, Admins).
+- [ ] `PATCH /api/v1/admin/users/{user_id}/status` - Admin endpoint to ban/disable or verify a user account.
+- [ ] `GET /api/v1/admin/analytics` - Fetch global platform metrics (Total candidates, total active campaigns, total interviews processed).
+- [ ] `DELETE /api/v1/admin/campaigns/{id}` - Admin ability to delete any campaign that violates terms.
+
+## 5. Security & Dependencies (Refactoring)
+- [ ] Ensure `get_current_admin` and `get_current_candidate` dependencies are implemented in `deps.py` (similar to the recently added `get_current_organization`).
+- [ ] Ensure cascading deletes are correctly setup on the Database so deleting a User removes their Candidate/Organization profile and all associated interviews.

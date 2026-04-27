@@ -143,3 +143,16 @@ Validation is handled at two levels:
 - **Password Policies**: Managed via Supabase configuration.
 - **Token Verification**: Incoming requests are validated against Supabase's public keys or via the `get_current_user` utility.
 - **CORS**: Configured in `settings.py` to allow only trusted frontend origins.
+
+---
+
+## Role-Based Access Control & Lazy Profile Creation
+
+We use FastAPI dependencies to enforce role-based access control (RBAC) on specific routes.
+
+### Example: `get_current_organization`
+For endpoints that only organizations should access (like creating a campaign), we use the `get_current_organization` dependency located in `app/deps.py`. 
+
+This dependency does two critical things:
+1. **Validates Role**: It checks that the authenticated `UserProfile.user_type` is exactly `"organization"`.
+2. **Lazy Profile Creation**: If a user signed up but doesn't have an associated `Organization` database record yet, this dependency will **automatically create** the `Organization` record on the fly before returning it to the route. This guarantees that organization endpoints will never encounter foreign key errors due to missing profiles.

@@ -48,21 +48,23 @@ You can define your database schema directly in Python using SQLAlchemy ORM mode
 Add your new model to `app/db/models/`. Example for an `Interview` model:
 
 ```python
-# app/db/models/interview.py
-from sqlalchemy import Column, String, Text, Integer, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+# app/db/models/job_role.py
+from sqlalchemy import Column, String, Text, Integer, ForeignKey, Boolean, Float, JSON
 from sqlalchemy.orm import relationship
 from app.db.models.base import BaseModel
 
-class Interview(BaseModel):
-    __tablename__ = "interviews"
+class JobRole(BaseModel):
+    __tablename__ = "job_roles"
     
+    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     title = Column(String(255), nullable=False)
-    candidate_email = Column(String(255), nullable=False)
-    status = Column(String(50), default="pending")
+    description = Column(Text, nullable=True)
+    required_skills = Column(JSON, default=[])
+    is_remote = Column(Boolean, default=False)
+    cutoff_score = Column(Float, default=60.0)
     
     # Relationship Example
-    questions = relationship("InterviewQuestion", back_populates="interview")
+    interviews = relationship("Interview", back_populates="job_role")
 ```
 
 ### Step 2: Ensure Tables are Created
@@ -97,19 +99,29 @@ class InterviewService:
 ```
 
 ### Step 4: Add to Routers
-Connect your FastAPI router to the service logic to handle incoming HTTP requests.
+Connect your FastAPI router to handle incoming HTTP requests using your dependencies and models.
 
 ```python
-# app/routers/interviews.py
+# app/routers/campaign.py
 from fastapi import APIRouter, Depends
-from app.db.session import get_db
-from app.db.services.interview_service import interview_service
+from sqlalchemy import select
+from app.db.session import get_session_maker
+from app.deps import get_current_organization
+from app.db.models.job_role import JobRole
+from app.db.models.organization import Organization
+from app.schemas.campaign import CampaignCreate
 
-router = APIRouter(prefix="/interviews", tags=["Interviews"])
+router = APIRouter(prefix="/campaigns", tags=["Campaigns"])
 
 @router.post("/")
-async def create_interview(title: str, email: str, db = Depends(get_db)):
-    return await interview_service.create_interview(db, title, email)
+async def create_campaign(campaign: CampaignCreate, org: Organization = Depends(get_current_organization)):
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        new_campaign = JobRole(organization_id=org.id, **campaign.model_dump())
+        session.add(new_campaign)
+        await session.commit()
+        await session.refresh(new_campaign)
+        return new_campaign
 ```
 
 ---
