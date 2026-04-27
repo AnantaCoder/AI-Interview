@@ -76,3 +76,39 @@ async def get_current_user_optional(
         return await get_current_user(credentials)
     except HTTPException:
         return None
+
+async def get_current_organization(
+    current_user: UserProfile = Depends(get_current_user),
+):
+    """
+    FastAPI dependency – restricts access to organizations only,
+    and returns the Organization database record. If the record
+    doesn't exist yet, it creates one.
+    """
+    from app.db.models.organization import Organization
+    
+    if current_user.user_type != "organization":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Requires organization privileges",
+        )
+        
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        result = await session.execute(
+            select(Organization).where(Organization.user_id == current_user.id)
+        )
+        org = result.scalar_one_or_none()
+        
+        if not org:
+            org = Organization(
+                user_id=current_user.id,
+                name=current_user.full_name or "My Organization",
+                contact_email=current_user.email
+            )
+            session.add(org)
+            await session.commit()
+            await session.refresh(org)
+            
+        session.expunge(org)
+        return org
