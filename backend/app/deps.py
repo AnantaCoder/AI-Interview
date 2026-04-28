@@ -151,4 +151,15 @@ async def get_current_candidate(
         session.expunge(candidate)
         return candidate
 
-      
+async def get_current_admin(
+    current_user: UserProfile = Depends(get_current_user),
+):
+    """
+    FastAPI dependency – restricts access to admins only.
+    """
+    if current_user.user_type != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Requires administrator privileges",
+        )
+    return current_user
