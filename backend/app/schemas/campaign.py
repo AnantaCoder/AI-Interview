@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
-
+from app.schemas.candidate import CandidateResponse
 class CampaignBase(BaseModel):
     title: str
     description: Optional[str] = None
@@ -41,3 +41,20 @@ class CampaignResponse(CampaignBase):
 
     class Config:
         from_attributes = True
+
+class CampaignApplicantResponse(BaseModel):
+    interview_id: str
+    status: str
+    ats_score: Optional[float]
+    interview_score: Optional[float]
+    final_score: Optional[float]
+    is_shortlisted: bool
+    applied_at: Optional[datetime]
+    candidate: CandidateResponse
+
+    class Config:
+        from_attributes = True
+        
+class ApplicantStatusUpdate(BaseModel):
+    status: Optional[str] = None # e.g., "rejected", "in_progress"
+    is_shortlisted: Optional[bool] = None

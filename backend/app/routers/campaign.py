@@ -6,7 +6,11 @@ from app.deps import get_current_organization
 from app.schemas.campaign import CampaignCreate, CampaignUpdate, CampaignResponse
 from app.db.models.job_role import JobRole
 from app.db.models.organization import Organization
-
+from app.deps import get_current_candidate
+from app.db.models.candidate import Candidate
+from app.db.models.interview import Interview, InterviewStatus
+from app.schemas.interview import InterviewResponse
+from app.schemas.campaign import CampaignApplicantResponse, ApplicantStatusUpdate
 router = APIRouter(prefix="/campaigns", tags=["Campaigns"])
 
 @router.get("/", response_model=List[CampaignResponse])
@@ -62,3 +66,115 @@ async def update_campaign(id: str, campaign_update: CampaignUpdate, org: Organiz
         await session.commit()
         await session.refresh(campaign)
         return campaign
+
+@router.post("/{id}/apply", response_model=InterviewResponse)
+async def apply_to_campaign(
+    id: str, 
+    candidate: Candidate = Depends(get_current_candidate)
+):
+    """Candidate applies to a campaign, creating an Interview record."""
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        # Check if campaign exists
+        result = await session.execute(select(JobRole).where(JobRole.id == id))
+        campaign = result.scalar_one_or_none()
+        if not campaign:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+            
+        # Check if already applied
+        existing = await session.execute(
+            select(Interview).where(
+                Interview.candidate_id == candidate.id,
+                Interview.job_role_id == id
+            )
+        )
+        if existing.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Already applied to this campaign")
+            
+        # Create Interview record
+        interview = Interview(
+            candidate_id=candidate.id,
+            job_role_id=id,
+            status=InterviewStatus.PENDING.value,
+            ats_score=candidate.ats_score # Using candidate's base ATS score for now
+        )
+        session.add(interview)
+        await session.commit()
+        await session.refresh(interview)
+        return interview
+
+@router.get("/{id}/applicants", response_model=List[CampaignApplicantResponse])
+async def get_campaign_applicants(
+    id: str, 
+    org: Organization = Depends(get_current_organization)
+):
+    """Organization fetches all candidates who applied to a specific campaign."""
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        # Verify org owns this campaign
+        result = await session.execute(
+            select(JobRole).where(JobRole.id == id, JobRole.organization_id == org.id)
+        )
+        if not result.scalar_one_or_none():
+            raise HTTPException(status_code=403, detail="Not authorized or campaign not found")
+            
+        # Fetch Interviews + Candidate data
+        result = await session.execute(
+            select(Interview, Candidate)
+            .join(Candidate, Interview.candidate_id == Candidate.id)
+            .where(Interview.job_role_id == id)
+            .order_by(Interview.ats_score.desc().nullslast())
+        )
+        
+        applicants = []
+        for interview, candidate in result.all():
+            applicants.append(
+                CampaignApplicantResponse(
+                    interview_id=str(interview.id),
+                    status=interview.status,
+                    ats_score=interview.ats_score,
+                    interview_score=interview.interview_score,
+                    final_score=interview.final_score,
+                    is_shortlisted=interview.is_shortlisted,
+                    applied_at=interview.created_at,
+                    candidate=candidate
+                )
+            )
+        return applicants
+
+@router.patch("/{id}/applicants/{candidate_id}/status")
+async def update_applicant_status(
+    id: str,
+    candidate_id: str,
+    update_data: ApplicantStatusUpdate,
+    org: Organization = Depends(get_current_organization)
+):
+    """Organization shortlists or updates status of a candidate."""
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        # Verify org owns this campaign
+        result = await session.execute(
+            select(JobRole).where(JobRole.id == id, JobRole.organization_id == org.id)
+        )
+        if not result.scalar_one_or_none():
+            raise HTTPException(status_code=403, detail="Not authorized or campaign not found")
+            
+        # Fetch the Interview record
+        result = await session.execute(
+            select(Interview).where(
+                Interview.job_role_id == id,
+                Interview.candidate_id == candidate_id
+            )
+        )
+        interview = result.scalar_one_or_none()
+        if not interview:
+            raise HTTPException(status_code=404, detail="Applicant not found")
+            
+        if update_data.status is not None:
+            interview.status = update_data.status
+        if update_data.is_shortlisted is not None:
+            interview.is_shortlisted = update_data.is_shortlisted
+            
+        await session.commit()
+        await session.refresh(interview)
+        return {"success": True, "message": "Applicant status updated"}
