@@ -5,7 +5,7 @@ from app.config.settings import get_settings
 from app.config.logging import setup_logging, get_logger
 from app.db.session import init_db, close_db
 from app.exceptions.handlers import register_exception_handlers
-from app.routers import health, auth, resume, ats, campaign
+from app.routers import health, auth, resume, ats, campaign, candidate
 import time
 logger = get_logger("main")
 
@@ -51,6 +51,7 @@ def create_app() -> FastAPI:
     app.include_router(resume.router, prefix="/api/v1")
     app.include_router(ats.router, prefix="/api/v1")
     app.include_router(campaign.router, prefix="/api/v1")
+    app.include_router(candidate.router, prefix="/api/v1")
     
     @app.get("/", summary="Root endpoint", description="API root with welcome message")
     async def root():

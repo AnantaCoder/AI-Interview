@@ -112,3 +112,43 @@ async def get_current_organization(
             
         session.expunge(org)
         return org
+
+
+async def get_current_candidate(
+    current_user: UserProfile = Depends(get_current_user),
+    ):
+    """
+    FastAPI dependency – restricts access to candidates only,
+    and returns the Candidate database record. If the record
+    doesn't exist yet, it creates one (lazy creation).
+    """
+
+    from app.db.models.candidate import Candidate
+
+    if current_user.user_type!="candidate":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Requires candidate privileges",
+        )
+
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        result = await session.execute(
+            select(Candidate).where(Candidate.user_id == current_user.id)
+        )
+        candidate = result.scalar_one_or_none()
+        
+        if not candidate:
+            candidate = Candidate(
+                user_id=current_user.id,
+                email=current_user.email,
+                full_name=current_user.full_name or "Candidate",
+            )
+            session.add(candidate)
+            await session.commit()
+            await session.refresh(candidate)
+            
+        session.expunge(candidate)
+        return candidate
+
+      

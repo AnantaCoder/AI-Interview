@@ -1,5 +1,6 @@
 from pydantic import EmailStr, Field
 from typing import Optional
+from datetime import datetime
 from uuid import UUID
 
 from app.schemas.base import AppBaseModel, TimestampMixin, IdMixin
@@ -38,3 +39,15 @@ class CandidateResponse(CandidateBase, IdMixin, TimestampMixin):
     is_active: bool = Field(default=True)
     ats_score: Optional[float] = Field(default=None, description="ATS resume score (0-100)")
     resume_category: Optional[str] = Field(default=None, description="Resume classification category")
+
+class CandidateApplicationResponse(AppBaseModel):
+    """Represents a single application (interview) for the candidate's dashboard."""
+    interview_id: UUID
+    campaign_title: str
+    organization_name: Optional[str] = None
+    status: str  # pending, in_progress, completed, cancelled
+    applied_at: Optional[datetime] = None
+    ats_score: Optional[float] = None
+    interview_score: Optional[float] = None
+    final_score: Optional[float] = None
+    is_shortlisted: bool = False
