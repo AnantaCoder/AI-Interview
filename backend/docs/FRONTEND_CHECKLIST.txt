@@ -1,0 +1,107 @@
+===================================================================================
+        FRONTEND CHECKLIST — AI Interview Analysis
+        For: Frontend Developer
+        Date: April 28, 2026
+===================================================================================
+PAGES THAT NEED BACKEND CONNECTION
+===================================================================================
+[ ] 1. Login Page (Login.tsx)
+      - Wire POST /api/v1/auth/signin
+      - Store access_token + refresh_token in localStorage
+      - Redirect based on user_type: candidate→/user, organization→/organization, admin→/admin
+
+[ ] 2. Signup Page (Signup.tsx)
+      - Wire POST /api/v1/auth/signup
+      - Send user_type field ("candidate" or "organization")
+      - Store tokens, redirect to dashboard
+
+[ ] 3. User Profile Page (UserProfile.tsx)
+      - Fetch: GET /api/v1/auth/me
+      - Update: PATCH /api/v1/auth/me
+      - Fields: full_name, phone_number, address, skills, job_role, year_of_experience
+
+[ ] 4. Candidate Profile (candidate-specific fields)
+      - Fetch: GET /api/v1/candidate/profile
+      - Update: PUT /api/v1/candidate/profile
+      - Fields: education, experience_years, linkedin_url, portfolio_url
+
+[ ] 5. Resume Upload (ResumeUpload.tsx)
+      - Wire POST /api/v1/candidate/resume/upload (multipart/form-data)
+      - Show returned resume_category after upload
+
+[ ] 6. Track Applications (TrackOpenings.tsx)
+      - REPLACE mock data with: GET /api/v1/candidate/applications
+      - Map status values: pending→"Applied", in_progress→"Interview", completed→"Reviewed"
+      - Add "Start Interview" button for rows where status = "pending"
+      - Button navigates to /user/interview/{interview_id}
+
+[ ] 7. AI Interview Page (AIInterview.tsx)
+      - [ ] Remove mockQuestions array (lines 9-15)
+      - [ ] On "Allow Camera" click: call POST /api/v1/interviews/{id}/start
+      - [ ] After start: fetch questions from GET /api/v1/interviews/{id}/questions
+      - [ ] On each "Submit": call POST /api/v1/interviews/{id}/responses
+            Body: { interview_id, question_id, response_text }
+      - [ ] After last question: call POST /api/v1/interviews/{id}/complete
+      - [ ] Show real scores on completion screen (final_score, feedback)
+
+[ ] 8. Organization Dashboard (OrganizationHome.tsx / OrganizationDashboard.tsx)
+      - Fetch org profile: GET /api/v1/organization/profile
+      - Update org profile: PUT /api/v1/organization/profile
+      - List campaigns: GET /api/v1/campaigns/
+
+[ ] 9. Campaign Creation (CampaignFlow.tsx)
+      - Create: POST /api/v1/campaigns/
+      - Update: PATCH /api/v1/campaigns/{id}
+      - Fields: title, description, required_skills, preferred_skills,
+        min_experience_years, max_experience_years, location, is_remote, cutoff_score
+
+[ ] 10. Candidate Review (CandidateReview.tsx)
+       - Fetch applicants: GET /api/v1/campaigns/{id}/applicants
+       - Shortlist/reject: PATCH /api/v1/campaigns/{id}/applicants/{candidate_id}/status
+         Body: { status: "in_progress", is_shortlisted: true }
+       - View interview results: GET /api/v1/interviews/{interview_id}/results
+
+[ ] 11. Admin Dashboard (AdminDashboard.tsx)
+       - Analytics: GET /api/v1/admin/analytics
+       - Shows: total_candidates, total_organizations, total_campaigns, total_interviews
+
+[ ] 12. User Management (UserManagement.tsx)
+       - List users: GET /api/v1/admin/users?skip=0&limit=50
+       - Ban/verify: PATCH /api/v1/admin/users/{user_id}/status
+       - Delete campaign: DELETE /api/v1/admin/campaigns/{id}
+
+FEATURES NOT YET BUILT (NEED NEW PAGES/COMPONENTS)
+===================================================================================
+[ ] 13. Interview Results Page
+       - New page at /user/interview/{id}/results
+       - Fetch: GET /api/v1/interviews/{id}/results
+       - Show: final_score, interview_score, ats_score, feedback, is_shortlisted
+
+[ ] 14. Organization — Interview Results Viewer
+       - Org can view candidate interview results
+       - Fetch: GET /api/v1/interviews/{interview_id}/results
+       - Show per-candidate: scores, feedback, cheating flags
+
+[ ] 15. Organization — Add Questions to Campaign
+       - Currently no UI for this (only via Swagger)
+       - Need a form to add interview questions to a campaign/job role
+       - Fields: question_text, question_type (technical/behavioral/situational),
+         expected_answer_keywords, max_score, order_index
+
+FUTURE FEATURES (NOT BLOCKING — DO AFTER ABOVE)
+===================================================================================
+[] 16. AI Voice — Read questions aloud using browser SpeechSynthesis API
+[] 17. Speech-to-Text — Convert candidate's spoken answer to text
+[] 18. Real-time cheating detection — WebSocket video frame analysis
+[] 19. Interview scheduling — calendar integration
+[] 20. ATS Scanner standalone page — upload resume + JD for scoring
+
+DONE (Already Working)
+===================================================================================
+[x] Auth token storage + auto-refresh (authSlice.ts)
+[x] Protected routes + role-based redirects (App.tsx)
+[x] Landing page
+[x] App layout + navigation
+[x] Theme switching (dark/light)
+[x] Health check endpoint
+===================================================================================

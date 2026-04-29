@@ -1,0 +1,666 @@
+================================================================================
+        AI INTERVIEW ANALYSIS — COMPLETE BACKEND API REFERENCE
+        For Frontend Development Team
+        Generated: April 28, 2026
+================================================================================
+
+BASE URL:  http://localhost:8000
+DOCS:      http://localhost:8000/docs  (Swagger UI — test all endpoints here)
+AUTH:      All protected endpoints need header:  Authorization: Bearer <access_token>
+
+
+================================================================================
+  1. AUTHENTICATION  (prefix: /api/v1/auth)
+================================================================================
+
+1.1  SIGN UP
+     POST /api/v1/auth/signup
+     Auth: None
+     Body:
+       {
+         "email": "user@example.com",
+         "password": "min8chars",
+         "user_type": "candidate" | "organization" | "admin",
+         "full_name": "John Doe"           // optional
+       }
+     Response:
+       {
+         "user": {
+           "id": "uuid",
+           "email": "user@example.com",
+           "user_type": "candidate",
+           "full_name": "John Doe",
+           "avatar_url": null,
+           "address": null,
+           "phone_number": null,
+           "is_active": true,
+           "skills": [],
+           "job_role": null,
+           "year_of_experience": null,
+           "created_at": "2026-04-28T10:00:00Z",
+           "updated_at": "2026-04-28T10:00:00Z"
+         },
+         "session": {
+           "access_token": "eyJ...",
+           "refresh_token": "eyJ...",
+           "token_type": "bearer",
+           "expires_in": 3600,
+           "expires_at": 1745827200
+         }
+       }
+
+1.2  SIGN IN
+     POST /api/v1/auth/signin
+     Auth: None
+     Body:
+       {
+         "email": "user@example.com",
+         "password": "password123"
+       }
+     Response: Same as Sign Up response above
+
+1.3  SIGN OUT
+     POST /api/v1/auth/signout
+     Auth: Bearer token required
+     Body: None
+     Response:
+       { "success": true, "message": "Signed out successfully" }
+
+1.4  GET CURRENT USER
+     GET /api/v1/auth/me
+     Auth: Bearer token required
+     Response:
+       {
+         "id": "uuid",
+         "email": "user@example.com",
+         "user_type": "candidate",
+         "full_name": "John Doe",
+         "avatar_url": null,
+         "address": null,
+         "phone_number": null,
+         "is_active": true,
+         "skills": ["python", "react"],
+         "job_role": "Software Engineer",
+         "year_of_experience": 3,
+         "created_at": "...",
+         "updated_at": "..."
+       }
+
+1.5  UPDATE CURRENT USER PROFILE
+     PATCH /api/v1/auth/me
+     Auth: Bearer token required
+     Body (all fields optional, send only what you want to update):
+       {
+         "full_name": "Jane Doe",
+         "avatar_url": "https://...",
+         "address": "123 Street",
+         "phone_number": "+91 9876543210",
+         "skills": ["python", "react", "node"],
+         "job_role": "Full Stack Developer",
+         "year_of_experience": 5
+       }
+     Response: Same as GET /auth/me
+
+1.6  GOOGLE OAUTH URL
+     GET /api/v1/auth/google?user_type=candidate
+     Auth: None
+     Response:
+       { "url": "https://accounts.google.com/o/oauth2/..." }
+
+1.7  GOOGLE CALLBACK
+     GET /api/v1/auth/callback/google?code=AUTH_CODE
+     Auth: None
+     Response: Same as Sign Up response
+
+1.8  REFRESH TOKEN
+     POST /api/v1/auth/refresh
+     Auth: None
+     Body:
+       { "refresh_token": "eyJ..." }
+     Response:
+       {
+         "access_token": "eyJ...",
+         "refresh_token": "eyJ...",
+         "token_type": "bearer",
+         "expires_in": 3600,
+         "expires_at": 1745827200
+       }
+
+1.9  REQUEST PASSWORD RESET
+     POST /api/v1/auth/password/reset
+     Auth: None
+     Body:
+       { "email": "user@example.com" }
+     Response:
+       { "success": true, "message": "Password reset email sent" }
+
+1.10 UPDATE PASSWORD
+     POST /api/v1/auth/password/update
+     Auth: Bearer token required
+     Body:
+       { "password": "newpassword123" }
+     Response:
+       { "success": true, "message": "Password updated successfully" }
+
+
+================================================================================
+  2. CANDIDATE  (prefix: /api/v1/candidate)
+     Auth: Bearer token required, user must be type "candidate"
+================================================================================
+
+2.1  GET CANDIDATE PROFILE
+     GET /api/v1/candidate/profile
+     Response:
+       {
+         "id": "uuid",
+         "user_id": "uuid",
+         "email": "candidate@example.com",
+         "full_name": "John Doe",
+         "phone": "+91 98765",
+         "education": "B.Tech CSE",
+         "experience_years": 2,
+         "skills": ["python", "react"],
+         "resume_url": null,
+         "linkedin_url": null,
+         "portfolio_url": null,
+         "ats_score": 78.5,
+         "resume_category": "INFORMATION-TECHNOLOGY",
+         "created_at": "...",
+         "updated_at": "..."
+       }
+
+2.2  UPDATE CANDIDATE PROFILE
+     PUT /api/v1/candidate/profile
+     Body (all fields optional):
+       {
+         "full_name": "John Updated",
+         "phone": "+91 11111",
+         "education": "M.Tech AI",
+         "experience_years": 3,
+         "skills": ["python", "tensorflow"],
+         "linkedin_url": "https://linkedin.com/in/john",
+         "portfolio_url": "https://john.dev"
+       }
+     Response: Same as GET candidate profile
+
+2.3  UPLOAD RESUME
+     POST /api/v1/candidate/resume/upload
+     Content-Type: multipart/form-data
+     Body:
+       resume_file: <PDF or DOCX file>
+     What it does:
+       - Extracts text from the resume
+       - Classifies into a category (e.g., "INFORMATION-TECHNOLOGY", "HEALTHCARE")
+       - Updates candidate record with resume_url and resume_category
+     Response: Same as GET candidate profile (with updated resume_category)
+
+2.4  GET MY APPLICATIONS
+     GET /api/v1/candidate/applications
+     Response:
+       [
+         {
+           "interview_id": "uuid",
+           "campaign_title": "Senior React Developer",
+           "organization_name": "TechCorp",
+           "status": "pending" | "in_progress" | "completed" | "cancelled",
+           "applied_at": "2026-04-28T10:00:00Z",
+           "ats_score": 78.5,
+           "interview_score": null,
+           "final_score": null,
+           "is_shortlisted": false
+         }
+       ]
+
+
+================================================================================
+  3. ORGANIZATION  (prefix: /api/v1/organization)
+     Auth: Bearer token required, user must be type "organization"
+================================================================================
+
+3.1  GET ORGANIZATION PROFILE
+     GET /api/v1/organization/profile
+     Response:
+       {
+         "id": "uuid",
+         "user_id": "uuid",
+         "name": "TechCorp",
+         "description": "We build great software",
+         "website": "https://techcorp.com",
+         "industry": "Technology",
+         "logo_url": null,
+         "contact_email": "hr@techcorp.com",
+         "created_at": "...",
+         "updated_at": "..."
+       }
+
+3.2  UPDATE ORGANIZATION PROFILE
+     PUT /api/v1/organization/profile
+     Body (all fields optional):
+       {
+         "name": "TechCorp Updated",
+         "description": "We build amazing software",
+         "website": "https://techcorp.io",
+         "industry": "AI & Technology",
+         "logo_url": "https://...",
+         "contact_email": "hello@techcorp.io"
+       }
+     Response: Same as GET organization profile
+
+
+================================================================================
+  4. CAMPAIGNS  (prefix: /api/v1/campaigns)
+================================================================================
+
+4.1  LIST MY CAMPAIGNS  (Organization only)
+     GET /api/v1/campaigns/
+     Auth: Bearer token, user_type = "organization"
+     Response:
+       [
+         {
+           "id": "uuid",
+           "organization_id": "uuid",
+           "title": "Senior React Developer",
+           "description": "Looking for experienced React dev...",
+           "required_skills": ["react", "typescript", "node"],
+           "preferred_skills": ["graphql", "aws"],
+           "min_experience_years": 3,
+           "max_experience_years": 7,
+           "education_requirement": "Bachelor's in CS",
+           "salary_range_min": 800000,
+           "salary_range_max": 1500000,
+           "location": "Bangalore",
+           "is_remote": true,
+           "cutoff_score": 60.0,
+           "created_at": "...",
+           "updated_at": "..."
+         }
+       ]
+
+4.2  CREATE CAMPAIGN  (Organization only)
+     POST /api/v1/campaigns/
+     Auth: Bearer token, user_type = "organization"
+     Body:
+       {
+         "title": "Backend Engineer",
+         "description": "Python FastAPI developer needed",
+         "required_skills": ["python", "fastapi", "postgresql"],
+         "preferred_skills": ["docker", "redis"],
+         "min_experience_years": 2,
+         "max_experience_years": 5,
+         "education_requirement": "B.Tech",
+         "salary_range_min": 600000,
+         "salary_range_max": 1200000,
+         "location": "Remote",
+         "is_remote": true,
+         "cutoff_score": 65.0
+       }
+     Response: Single campaign object (same shape as list item)
+
+4.3  GET SINGLE CAMPAIGN  (Organization only)
+     GET /api/v1/campaigns/{id}
+     Auth: Bearer token, user_type = "organization"
+     Response: Single campaign object
+
+4.4  UPDATE CAMPAIGN  (Organization only)
+     PATCH /api/v1/campaigns/{id}
+     Auth: Bearer token, user_type = "organization"
+     Body (all fields optional):
+       {
+         "title": "Updated Title",
+         "cutoff_score": 70.0
+       }
+     Response: Updated campaign object
+
+4.5  APPLY TO CAMPAIGN  (Candidate only)
+     POST /api/v1/campaigns/{id}/apply
+     Auth: Bearer token, user_type = "candidate"
+     Body: None
+     What it does:
+       - Creates an Interview record with status = "pending"
+       - Copies candidate's ATS score to the interview
+       - Returns error if already applied
+     Response:
+       {
+         "id": "interview-uuid",
+         "candidate_id": "uuid",
+         "job_role_id": "campaign-uuid",
+         "status": "pending",
+         "scheduled_at": null,
+         "duration_minutes": 30,
+         "ats_score": 78.5,
+         "interview_score": null,
+         "final_score": null,
+         "is_shortlisted": false,
+         "feedback": null,
+         "started_at": null,
+         "completed_at": null,
+         "created_at": "...",
+         "updated_at": "..."
+       }
+
+4.6  GET CAMPAIGN APPLICANTS  (Organization only)
+     GET /api/v1/campaigns/{id}/applicants
+     Auth: Bearer token, user_type = "organization"
+     Response:
+       [
+         {
+           "interview_id": "uuid",
+           "status": "pending",
+           "ats_score": 78.5,
+           "interview_score": null,
+           "final_score": null,
+           "is_shortlisted": false,
+           "applied_at": "2026-04-28T10:00:00Z",
+           "candidate": {
+             "id": "uuid",
+             "user_id": "uuid",
+             "email": "candidate@example.com",
+             "full_name": "John Doe",
+             "phone": null,
+             "education": "B.Tech",
+             "experience_years": 2,
+             "skills": ["python"],
+             "resume_url": null,
+             "linkedin_url": null,
+             "portfolio_url": null,
+             "ats_score": 78.5,
+             "resume_category": "INFORMATION-TECHNOLOGY",
+             "created_at": "...",
+             "updated_at": "..."
+           }
+         }
+       ]
+     Note: Results are sorted by ATS score (highest first)
+
+4.7  UPDATE APPLICANT STATUS  (Organization only)
+     PATCH /api/v1/campaigns/{id}/applicants/{candidate_id}/status
+     Auth: Bearer token, user_type = "organization"
+     Body:
+       {
+         "status": "in_progress",          // optional: "pending", "in_progress", "completed", "cancelled"
+         "is_shortlisted": true            // optional: true or false
+       }
+     Response:
+       { "success": true, "message": "Applicant status updated" }
+
+
+================================================================================
+  5. INTERVIEW WORKFLOW  (prefix: /api/v1/interviews)
+================================================================================
+
+5.1  LIST MY INTERVIEWS  (Candidate or Organization)
+     GET /api/v1/interviews/
+     Auth: Bearer token
+     Behavior:
+       - If user_type = "candidate": returns interviews where this candidate is the interviewee
+       - If user_type = "organization": returns interviews for campaigns owned by this org
+     Response:
+       [
+         {
+           "id": "uuid",
+           "candidate_id": "uuid",
+           "job_role_id": "uuid",
+           "status": "pending",
+           "scheduled_at": null,
+           "duration_minutes": 30,
+           "ats_score": 78.5,
+           "interview_score": null,
+           "final_score": null,
+           "is_shortlisted": false,
+           "feedback": null,
+           "started_at": null,
+           "completed_at": null,
+           "created_at": "...",
+           "updated_at": "..."
+         }
+       ]
+
+5.2  START INTERVIEW  (Candidate only)
+     POST /api/v1/interviews/{id}/start
+     Auth: Bearer token, user_type = "candidate"
+     Body: None
+     What it does:
+       - Changes status from "pending" to "in_progress"
+       - Records started_at timestamp
+       - Will fail if interview is already started or completed
+     Response: Interview object (same shape as list item, with updated status)
+
+5.3  GET INTERVIEW QUESTIONS  (Candidate only)
+     GET /api/v1/interviews/{id}/questions
+     Auth: Bearer token, user_type = "candidate"
+     Response:
+       [
+         {
+           "id": "question-uuid",
+           "job_role_id": "uuid",
+           "question_text": "Explain your experience with Python and how you have applied it in a project.",
+           "question_type": "technical" | "behavioral" | "situational",
+           "expected_answer_keywords": ["python", "async", "fastapi"],
+           "max_score": 10.0,
+           "order_index": 0,
+           "created_at": "...",
+           "updated_at": "..."
+         },
+         {
+           "id": "question-uuid-2",
+           "question_text": "How do you handle tight deadlines?",
+           "question_type": "behavioral",
+           "expected_answer_keywords": ["prioritize", "communicate"],
+           "max_score": 10.0,
+           "order_index": 1,
+           "created_at": "...",
+           "updated_at": "..."
+         }
+       ]
+     Note: Questions are sorted by order_index (ascending)
+     Note: If no questions exist for the job role, returns empty array []
+           (Organization must add questions first via Swagger or a future UI)
+
+5.4  SUBMIT ANSWER  (Candidate only)
+     POST /api/v1/interviews/{id}/responses
+     Auth: Bearer token, user_type = "candidate"
+     Body:
+       {
+         "interview_id": "interview-uuid",
+         "question_id": "question-uuid",
+         "response_text": "I have 3 years of experience with Python, primarily using FastAPI..."
+       }
+     What it does:
+       - Validates interview is in "in_progress" status
+       - Validates question belongs to this interview's job role
+       - Prevents duplicate submissions for same question
+       - [FUTURE] Scores the answer using AI
+       - [FUTURE] Checks cheating flags from video analysis
+       - Currently returns stubbed scores
+     Response:
+       {
+         "id": "response-uuid",
+         "interview_id": "uuid",
+         "question_id": "uuid",
+         "response_text": "I have 3 years of experience...",
+         "response_score": 8.5,
+         "confidence_level": 90.0,
+         "relevance_score": 85.0,
+         "cheating_detected": false,
+         "notes": "Candidate answered clearly with good structure.",
+         "created_at": "...",
+         "updated_at": "..."
+       }
+
+5.5  COMPLETE INTERVIEW  (Candidate only)
+     POST /api/v1/interviews/{id}/complete
+     Auth: Bearer token, user_type = "candidate"
+     Body: None
+     What it does:
+       - Changes status to "completed"
+       - Records completed_at timestamp
+       - [FUTURE] Aggregates all response scores
+       - Calculates: final_score = (ats_score * 0.3) + (interview_score * 0.7)
+       - Generates feedback text
+     Response: Interview object with final scores filled in:
+       {
+         "id": "uuid",
+         "status": "completed",
+         "ats_score": 78.5,
+         "interview_score": 85.0,
+         "final_score": 83.0,
+         "feedback": "Overall performance was solid. No suspicious activities detected.",
+         "started_at": "2026-04-28T10:00:00Z",
+         "completed_at": "2026-04-28T10:25:00Z",
+         ...
+       }
+
+5.6  GET INTERVIEW RESULTS  (Candidate or Organization)
+     GET /api/v1/interviews/{id}/results
+     Auth: Bearer token
+     Access control:
+       - Candidate can only see their own interviews
+       - Organization can only see interviews for their campaigns
+     Response: Same as interview object with all scores and feedback
+
+
+================================================================================
+  6. RESUME ANALYSIS  (prefix: /api/v1/resume)
+================================================================================
+
+6.1  PREDICT RESUME CATEGORY
+     POST /api/v1/resume/predict-category
+     Auth: None
+     Body:
+       { "text": "Experienced Python developer with expertise in..." }
+     Response:
+       { "category": "INFORMATION-TECHNOLOGY" }
+     Possible categories:
+       ACCOUNTANT, ADVOCATE, AGRICULTURE, APPAREL, ARTS, AUTOMOBILE,
+       AVIATION, BANKING, BPO, BUSINESS-DEVELOPMENT, CHEF, CONSTRUCTION,
+       CONSULTANT, DESIGNER, DIGITAL-MEDIA, ENGINEERING, FINANCE, FITNESS,
+       HEALTHCARE, HR, INFORMATION-TECHNOLOGY, PUBLIC-RELATIONS, SALES, TEACHER
+
+
+================================================================================
+  7. ATS SCANNER  (prefix: /api/v1/ats)
+================================================================================
+
+7.1  EVALUATE RESUME AGAINST JOB DESCRIPTION
+     POST /api/v1/ats/evaluate
+     Auth: None
+     Content-Type: multipart/form-data
+     Body:
+       resume_file: <PDF or DOCX file>       (required)
+       job_desc_file: <PDF or DOCX file>     (optional — provide this OR job_desc_text)
+       job_desc_text: "Looking for a..."     (optional — provide this OR job_desc_file)
+     What it does:
+       - Extracts text from resume and JD
+       - Uses Gemini AI to generate ATS compatibility score
+     Response: AI-generated evaluation result (format depends on Gemini response)
+
+
+================================================================================
+  8. ADMIN PANEL  (prefix: /api/v1/admin)
+     Auth: Bearer token required, user must be type "admin"
+================================================================================
+
+8.1  GET ALL USERS (Paginated)
+     GET /api/v1/admin/users?skip=0&limit=50
+     Response:
+       {
+         "total": 150,
+         "items": [
+           {
+             "id": "uuid",
+             "email": "user@example.com",
+             "user_type": "candidate",
+             "full_name": "John Doe",
+             "is_active": true,
+             "created_at": "..."
+           }
+         ]
+       }
+
+8.2  UPDATE USER STATUS (Ban/Verify)
+     PATCH /api/v1/admin/users/{user_id}/status
+     Body:
+       {
+         "is_active": false,           // optional: ban/unban user
+         "email_verified": "Y"         // optional: "Y" or "N"
+       }
+     Response:
+       { "success": true, "message": "User status updated" }
+
+8.3  GET PLATFORM ANALYTICS
+     GET /api/v1/admin/analytics
+     Response:
+       {
+         "total_candidates": 120,
+         "total_organizations": 25,
+         "total_campaigns": 45,
+         "total_interviews": 89
+       }
+
+8.4  DELETE CAMPAIGN
+     DELETE /api/v1/admin/campaigns/{id}
+     Response:
+       { "success": true, "message": "Campaign deleted" }
+
+
+================================================================================
+  9. HEALTH CHECK  (prefix: /api/v1/health)
+================================================================================
+
+9.1  HEALTH CHECK
+     GET /api/v1/health
+     Auth: None
+     Response:
+       {
+         "status": "healthy",
+         "version": "1.0.0",
+         "database": "connected"
+       }
+
+
+================================================================================
+  QUICK REFERENCE — STATUS VALUES
+================================================================================
+
+  Interview Status:   "pending" | "in_progress" | "completed" | "cancelled"
+  Question Type:      "technical" | "behavioral" | "situational"
+  User Type:          "candidate" | "organization" | "admin"
+
+
+================================================================================
+  QUICK REFERENCE — INTERVIEW FLOW (API Call Order)
+================================================================================
+
+  1. Candidate applies       →  POST /api/v1/campaigns/{campaign_id}/apply
+  2. Candidate starts         →  POST /api/v1/interviews/{interview_id}/start
+  3. Load questions           →  GET  /api/v1/interviews/{interview_id}/questions
+  4. Submit each answer       →  POST /api/v1/interviews/{interview_id}/responses  (repeat per question)
+  5. Finish interview         →  POST /api/v1/interviews/{interview_id}/complete
+  6. View results             →  GET  /api/v1/interviews/{interview_id}/results
+
+
+================================================================================
+  QUICK REFERENCE — AUTHENTICATION FLOW
+================================================================================
+
+  1. Sign up or Sign in      →  POST /api/v1/auth/signup  or  /api/v1/auth/signin
+  2. Store access_token and refresh_token in localStorage
+  3. Send token in every request:  Authorization: Bearer <access_token>
+  4. When access_token expires, refresh it:  POST /api/v1/auth/refresh
+  5. If refresh also fails, redirect to login page
+
+
+================================================================================
+  NOTES FOR FRONTEND
+================================================================================
+
+  - Swagger UI at http://localhost:8000/docs has a "Try it out" button for every endpoint
+  - All UUIDs are 36-character strings like "a1b2c3d4-e5f6-..."
+  - Dates are ISO 8601 format: "2026-04-28T10:00:00Z"
+  - Backend runs on port 8000, frontend on port 5173 (CORS is configured)
+  - When a candidate signs up, their Candidate profile is auto-created on first API call
+  - When an organization signs up, their Organization profile is auto-created on first API call
+  - For the interview to have questions, the Organization must add them first
+    (currently only possible via Swagger UI — a "Manage Questions" UI is needed)
+
+================================================================================
