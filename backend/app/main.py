@@ -25,6 +25,7 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    print("CORS ORIGINS LOADED:", settings.cors_origins)
     
     app = FastAPI(
         title=settings.app_name,
@@ -35,7 +36,7 @@ def create_app() -> FastAPI:
         openapi_url="/openapi.json",
         lifespan=lifespan
     )
-    
+   
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

@@ -93,7 +93,57 @@ async def get_analytics(admin: UserProfile = Depends(get_current_admin)):
             total_campaigns=camp_res.scalar() or 0,
             total_interviews=int_res.scalar() or 0,
         )
+@router.get("/organizations")
+async def get_all_organizations(
+    admin: UserProfile = Depends(get_current_admin)
+):
+    session_maker = get_session_maker()
 
+    async with session_maker() as session:
+
+        organizations_result = await session.execute(
+            select(Organization)
+        )
+
+        organizations = organizations_result.scalars().all()
+
+        response = []
+
+        for org in organizations:
+
+            campaigns_result = await session.execute(
+                select(func.count())
+                .select_from(JobRole)
+                .where(JobRole.organization_id == org.id)
+            )
+
+            campaigns = campaigns_result.scalar() or 0
+
+            applications_result = await session.execute(
+                select(func.count())
+                .select_from(Interview)
+                .join(
+                    JobRole,
+                    Interview.job_role_id == JobRole.id
+                )
+                .where(JobRole.organization_id == org.id)
+            )
+
+            applications = applications_result.scalar() or 0
+
+            response.append(
+                {
+                    "id": str(org.id),
+                    "name": org.name,
+                    "website": org.website,
+                    "industry": org.industry,
+                    "contact_email": org.contact_email,
+                    "campaigns": campaigns,
+                    "applications": applications,
+                }
+            )
+
+        return response
 @router.delete("/campaigns/{id}")
 async def delete_campaign(id: str, admin: UserProfile = Depends(get_current_admin)):
     """Admin ability to delete any campaign that violates terms."""
