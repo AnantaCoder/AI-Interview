@@ -32,6 +32,8 @@ matplotlib>=3.8.0
 seaborn>=0.13.0
 scikit-learn>=1.4.0
 imbalanced-learn>=0.12.0
+tensorflow>=2.15.0
+nltk>=3.8.0
 
 # Resume ATS dependencies
 PyMuPDF>=1.23.0
