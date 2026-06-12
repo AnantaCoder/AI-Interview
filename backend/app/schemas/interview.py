@@ -44,6 +44,7 @@ class InterviewQuestionBase(AppBaseModel):
     question_text: str = Field(..., description="Interview question")
     question_type: Literal["technical", "behavioral", "situational"] = Field(default="technical")
     expected_answer_keywords: Optional[list[str]] = Field(default_factory=list)
+    expected_answer: Optional[str] = Field(default=None, description="Ideal expected answer")
     max_score: float = Field(default=10.0, ge=0)
     order_index: int = Field(default=0, ge=0)
 
@@ -54,6 +55,12 @@ class InterviewQuestionCreate(InterviewQuestionBase):
 
 class InterviewQuestionResponse(InterviewQuestionBase, IdMixin, TimestampMixin):
     job_role_id: UUID
+
+
+class GenerateQuestionsRequest(AppBaseModel):
+    num_questions: int = Field(default=5, ge=1, le=15, description="Number of questions to generate")
+    question_type: Literal["technical", "behavioral", "situational", "mixed"] = Field(default="mixed", description="Type of questions")
+    difficulty: Literal["entry", "mid", "senior"] = Field(default="mid", description="Difficulty level of questions")
 
 
 class InterviewResponseBase(AppBaseModel):

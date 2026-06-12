@@ -9,8 +9,10 @@ from app.db.models.organization import Organization
 from app.deps import get_current_candidate
 from app.db.models.candidate import Candidate
 from app.db.models.interview import Interview, InterviewStatus
-from app.schemas.interview import InterviewResponse
+from app.schemas.interview import InterviewResponse, GenerateQuestionsRequest, InterviewQuestionResponse
 from app.schemas.campaign import CampaignApplicantResponse, ApplicantStatusUpdate
+from app.db.models.interview import InterviewQuestion
+from app.db.services.question_service import generate_questions_for_role
 router = APIRouter(prefix="/campaigns", tags=["Campaigns"])
 
 @router.get("/", response_model=List[CampaignResponse])
@@ -178,3 +180,64 @@ async def update_applicant_status(
         await session.commit()
         await session.refresh(interview)
         return {"success": True, "message": "Applicant status updated"}
+
+
+@router.post("/{id}/generate-questions", response_model=List[InterviewQuestionResponse])
+async def generate_campaign_questions(
+    id: str,
+    request_data: GenerateQuestionsRequest,
+    org: Organization = Depends(get_current_organization)
+):
+    """
+    Generate questions with answers using Gemini AI and store them in the database.
+    Only available to the campaign organizer (organization).
+    """
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        # Verify organization owns this campaign
+        result = await session.execute(
+            select(JobRole).where(JobRole.id == id, JobRole.organization_id == org.id)
+        )
+        campaign = result.scalar_one_or_none()
+        if not campaign:
+            raise HTTPException(status_code=404, detail="Campaign not found or unauthorized")
+
+        # Generate questions via Gemini service
+        try:
+            generated_questions = await generate_questions_for_role(
+                campaign,
+                num_questions=request_data.num_questions,
+                question_type=request_data.question_type,
+                difficulty=request_data.difficulty
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to generate questions: {str(e)}")
+
+        # Delete existing questions to avoid duplication
+        from sqlalchemy import delete
+        await session.execute(
+            delete(InterviewQuestion).where(InterviewQuestion.job_role_id == id)
+        )
+
+        # Insert new questions into database
+        for idx, q in enumerate(generated_questions):
+            db_q = InterviewQuestion(
+                job_role_id=id,
+                question_text=q["question_text"],
+                question_type=q["question_type"],
+                expected_answer=q.get("expected_answer"),
+                expected_answer_keywords=q.get("expected_answer_keywords", []),
+                order_index=idx
+            )
+            session.add(db_q)
+
+        await session.commit()
+
+        # Query back the full list of saved questions
+        result = await session.execute(
+            select(InterviewQuestion)
+            .where(InterviewQuestion.job_role_id == id)
+            .order_by(InterviewQuestion.order_index.asc())
+        )
+        questions = result.scalars().all()
+        return questions

@@ -4,14 +4,15 @@ import fitz
 from docx import Document
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 # We try to import google-genai, fallback to older module if needed, although user specifically asked for latest.
 try:
     from google import genai
-    from google.genai import types
+    USING_NEW_SDK = True
 except ImportError:
     import google.generativeai as genai
+    USING_NEW_SDK = False
     
 def extract_text(file_path):
     file_extension = file_path.split(".")[-1].lower()
@@ -59,7 +60,7 @@ Return the response strictly in JSON format as follows:
         if not api_key:
             return {"error": "API key not found"}
             
-        try:
+        if USING_NEW_SDK:
             # New google-genai 1.0+ SDK usage
             client = genai.Client(api_key=api_key)
             response = client.models.generate_content(
@@ -67,8 +68,8 @@ Return the response strictly in JSON format as follows:
                 contents=prompt
             )
             text_response = response.text
-        except Exception:
-             # Fallback to the older syntax just in case package resolution was partial
+        else:
+             # Fallback to the older syntax just in case package resolution was older
              genai.configure(api_key=api_key)
              model = genai.GenerativeModel("gemini-2.5-flash")
              response = model.generate_content([prompt])

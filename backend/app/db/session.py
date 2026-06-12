@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
+from sqlalchemy import text
 from typing import AsyncGenerator
 
 from app.config.settings import get_settings
@@ -111,6 +112,22 @@ async def create_tables() -> None:
         engine = get_engine()
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
+            
+            # Ensure expected_answer column is added to interview_questions if it doesn't exist
+            url_str = str(engine.url)
+            if "postgresql" in url_str:
+                await conn.execute(
+                    text("ALTER TABLE interview_questions ADD COLUMN IF NOT EXISTS expected_answer TEXT;")
+                )
+                logger.info("Executed ALTER TABLE for PostgreSQL expected_answer column")
+            elif "sqlite" in url_str:
+                try:
+                    await conn.execute(
+                        text("ALTER TABLE interview_questions ADD COLUMN expected_answer TEXT;")
+                    )
+                    logger.info("Executed ALTER TABLE for SQLite expected_answer column")
+                except Exception:
+                    pass
         logger.info("Database tables created successfully")
     except Exception as e:
         logger.error(f"Failed to create tables: {e}")

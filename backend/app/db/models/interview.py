@@ -53,6 +53,7 @@ class InterviewQuestion(BaseModel):
     question_text = Column(Text, nullable=False)
     question_type = Column(String(20), default=QuestionType.TECHNICAL.value)
     expected_answer_keywords = Column(JSON, default=[])
+    expected_answer = Column(Text, nullable=True)
     max_score = Column(Float, default=10.0)
     order_index = Column(Integer, default=0)
     
