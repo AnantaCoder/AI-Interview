@@ -18,6 +18,10 @@ Understand how we store data, create new tables, and interact with our PostgreSQ
 Discover how our intelligent pipeline uses Machine Learning (Gradient Boosting & TF-IDF) to automatically categorize uploaded resumes into industries (e.g., HR, Engineering, IT, etc.).
 👉 **[Read the Resume Categorization Guide](./resume_categorization.md)**
 
+### 4. 📹 Video Proctoring & Behavior Analysis (Computer Vision)
+Explore how the backend analyzes webcam streams in real time via WebSockets to detect gaze direction, evaluate head pose, classify emotions, score sitting posture, and run YOLOv8n-based multi-person detection.
+👉 **[Read the Video Analysis Guide](./video_analysis.md)**
+
 ---
 
 ## 🛠️ Quick Start for Developers
