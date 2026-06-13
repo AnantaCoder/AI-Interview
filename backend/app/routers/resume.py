@@ -50,7 +50,7 @@ def resume_cleaning(text: str) -> str:
     cleaned_text = re.sub(r'[^\w\s]|_', ' ', cleaned_text)
     cleaned_text = re.sub(r'\d+', ' ', cleaned_text)
     cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
-    cleaned_text = re.sub('http\S+\s', " ", cleaned_text)
+    cleaned_text = re.sub(r'http\S+\s', " ", cleaned_text)
     
     # Convert to lowercase
     cleaned_text = cleaned_text.lower()

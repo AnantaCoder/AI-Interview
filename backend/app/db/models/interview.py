@@ -37,6 +37,11 @@ class Interview(BaseModel):
     started_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
     
+    # Video proctoring scores (populated when proctoring session ends)
+    video_confidence_score = Column(Float, nullable=True)
+    video_attention_score = Column(Float, nullable=True)
+    video_integrity_score = Column(Float, nullable=True)
+    
     # Relationships
     candidate = relationship("Candidate", back_populates="interviews")
     job_role = relationship("JobRole", back_populates="interviews")
@@ -83,3 +88,36 @@ class InterviewResponse(BaseModel):
     
     def __repr__(self) -> str:
         return f"<InterviewResponse(id={self.id}, score={self.response_score})>"
+
+
+class ProctorSession(BaseModel):
+    __tablename__ = "proctor_sessions"
+    
+    interview_id = Column(String(36), ForeignKey("interviews.id", ondelete="CASCADE"), unique=True, nullable=False)
+    total_frames = Column(Integer, default=0)
+    
+    # Aggregated scores (0–100)
+    confidence_score = Column(Float, default=0.0)
+    attention_score = Column(Float, default=0.0)
+    integrity_score = Column(Float, default=0.0)
+    posture_score = Column(Float, default=0.0)
+    
+    # Detailed signal counters
+    face_not_visible_count = Column(Integer, default=0)
+    gaze_away_count = Column(Integer, default=0)
+    head_turn_count = Column(Integer, default=0)
+    multi_person_count = Column(Integer, default=0)
+    excessive_movement_count = Column(Integer, default=0)
+    
+    # Emotion breakdown (JSON: {"neutral": 45, "happy": 20, ...})
+    emotion_distribution = Column(JSON, default={})
+    
+    # Detailed event log (JSON array of timestamped events)
+    event_log = Column(JSON, default=[])
+    
+    # Relationship
+    interview = relationship("Interview", backref="proctor_session", uselist=False)
+    
+    def __repr__(self) -> str:
+        return f"<ProctorSession(interview_id={self.interview_id}, frames={self.total_frames})>"
+

@@ -6,7 +6,7 @@ from app.deps import get_current_organization
 from app.schemas.campaign import CampaignCreate, CampaignUpdate, CampaignResponse
 from app.db.models.job_role import JobRole
 from app.db.models.organization import Organization
-from app.deps import get_current_candidate
+from app.deps import get_current_candidate, get_current_user
 from app.db.models.candidate import Candidate
 from app.db.models.interview import Interview, InterviewStatus
 from app.schemas.interview import InterviewResponse, GenerateQuestionsRequest, InterviewQuestionResponse
@@ -176,6 +176,8 @@ async def update_applicant_status(
             interview.status = update_data.status
         if update_data.is_shortlisted is not None:
             interview.is_shortlisted = update_data.is_shortlisted
+        if update_data.scheduled_at is not None:
+            interview.scheduled_at = update_data.scheduled_at
             
         await session.commit()
         await session.refresh(interview)
@@ -241,3 +243,46 @@ async def generate_campaign_questions(
         )
         questions = result.scalars().all()
         return questions
+
+
+@router.get("/listings/all", response_model=List[CampaignResponse])
+async def list_campaign_listings(current_user = Depends(get_current_user)):
+    """Fetch all campaign listings for candidates to view and apply."""
+    from app.db.models.organization import Organization
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        result = await session.execute(
+            select(JobRole, Organization.name)
+            .join(Organization, JobRole.organization_id == Organization.id)
+            .order_by(JobRole.created_at.desc())
+        )
+        listings = []
+        for job_role, org_name in result.all():
+            res = CampaignResponse.model_validate(job_role)
+            res.organization_name = org_name
+            listings.append(res)
+        return listings
+
+
+@router.get("/{id}/questions", response_model=List[InterviewQuestionResponse])
+async def get_campaign_questions(
+    id: str,
+    org: Organization = Depends(get_current_organization)
+):
+    """Fetch all configured questions for a specific campaign (JobRole)."""
+    session_maker = get_session_maker()
+    async with session_maker() as session:
+        # Verify organization owns this campaign
+        result = await session.execute(
+            select(JobRole).where(JobRole.id == id, JobRole.organization_id == org.id)
+        )
+        campaign = result.scalar_one_or_none()
+        if not campaign:
+            raise HTTPException(status_code=404, detail="Campaign not found or unauthorized")
+            
+        result_qs = await session.execute(
+            select(InterviewQuestion)
+            .where(InterviewQuestion.job_role_id == id)
+            .order_by(InterviewQuestion.order_index.asc())
+        )
+        return result_qs.scalars().all()

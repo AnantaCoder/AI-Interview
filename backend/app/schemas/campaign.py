@@ -38,6 +38,7 @@ class CampaignResponse(CampaignBase):
     organization_id: str
     created_at: datetime
     updated_at: datetime
+    organization_name: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -58,3 +59,4 @@ class CampaignApplicantResponse(BaseModel):
 class ApplicantStatusUpdate(BaseModel):
     status: Optional[str] = None # e.g., "rejected", "in_progress"
     is_shortlisted: Optional[bool] = None
+    scheduled_at: Optional[datetime] = None

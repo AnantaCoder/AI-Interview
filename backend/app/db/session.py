@@ -105,7 +105,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def create_tables() -> None:
     """Create all tables in the database from SQLAlchemy models."""
     # Import all models to register them with Base
-    from app.db.models import User, Organization, Candidate, JobRole, Interview, InterviewQuestion, InterviewResponse
+    from app.db.models import User, Organization, Candidate, JobRole, Interview, InterviewQuestion, InterviewResponse, ProctorSession
 
     logger.info("Creating database tables...")
     try:
@@ -114,20 +114,48 @@ async def create_tables() -> None:
             await conn.run_sync(Base.metadata.create_all)
             
             # Ensure expected_answer column is added to interview_questions if it doesn't exist
+            # Ensure video proctoring columns are added to interviews if they don't exist
             url_str = str(engine.url)
             if "postgresql" in url_str:
                 await conn.execute(
                     text("ALTER TABLE interview_questions ADD COLUMN IF NOT EXISTS expected_answer TEXT;")
                 )
-                logger.info("Executed ALTER TABLE for PostgreSQL expected_answer column")
+                await conn.execute(
+                    text("ALTER TABLE interviews ADD COLUMN IF NOT EXISTS video_confidence_score DOUBLE PRECISION;")
+                )
+                await conn.execute(
+                    text("ALTER TABLE interviews ADD COLUMN IF NOT EXISTS video_attention_score DOUBLE PRECISION;")
+                )
+                await conn.execute(
+                    text("ALTER TABLE interviews ADD COLUMN IF NOT EXISTS video_integrity_score DOUBLE PRECISION;")
+                )
+                logger.info("Executed ALTER TABLE migrations for PostgreSQL columns")
             elif "sqlite" in url_str:
                 try:
                     await conn.execute(
                         text("ALTER TABLE interview_questions ADD COLUMN expected_answer TEXT;")
                     )
-                    logger.info("Executed ALTER TABLE for SQLite expected_answer column")
                 except Exception:
                     pass
+                try:
+                    await conn.execute(
+                        text("ALTER TABLE interviews ADD COLUMN video_confidence_score DOUBLE PRECISION;")
+                    )
+                except Exception:
+                    pass
+                try:
+                    await conn.execute(
+                        text("ALTER TABLE interviews ADD COLUMN video_attention_score DOUBLE PRECISION;")
+                    )
+                except Exception:
+                    pass
+                try:
+                    await conn.execute(
+                        text("ALTER TABLE interviews ADD COLUMN video_integrity_score DOUBLE PRECISION;")
+                    )
+                except Exception:
+                    pass
+                logger.info("Executed ALTER TABLE migrations for SQLite columns")
         logger.info("Database tables created successfully")
     except Exception as e:
         logger.error(f"Failed to create tables: {e}")
