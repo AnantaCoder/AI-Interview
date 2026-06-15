@@ -8,7 +8,7 @@ from app.config.logging import get_logger
 
 logger = get_logger("exceptions.handlers")
 
-
+# base case exception class
 class AppException(Exception):
     def __init__(self, message: str, error_code: str = None, status_code: int = 400):
         self.message = message
@@ -16,7 +16,7 @@ class AppException(Exception):
         self.status_code = status_code
         super().__init__(self.message)
 
-
+# custom exception classes 
 class NotFoundException(AppException):
     def __init__(self, message: str = "Resource not found", error_code: str = "NOT_FOUND"):
         super().__init__(message, error_code, status_code=404)
@@ -38,7 +38,11 @@ class ConflictException(AppException):
 
 
 def register_exception_handlers(app: FastAPI) -> None:
-    
+    """ like a switch case it routes the exceptioon to its designated place .
+        If AppException occurs → run app_exception_handler 
+        If HTTPException occurs → run http_exception_handler 
+        If ValidationError occurs → run validation_exception_handler 
+        Else → run general_exception_handler """
     @app.exception_handler(AppException)
     async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
         logger.warning(f"App exception: {exc.message}")

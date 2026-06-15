@@ -56,7 +56,7 @@ def get_database_url() -> tuple[str, dict]:
 
 def get_engine():
     global _engine
-    if _engine is None:
+    if _engine is None: #None coz initially no db engine is present 
         settings = get_settings()
         database_url, connect_args = get_database_url()
         is_sqlite = "sqlite" in database_url
