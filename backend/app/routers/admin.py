@@ -35,19 +35,9 @@ async def get_all_users(
         users = result.scalars().all()
         
         # Convert models to UserProfile schema
-        user_profiles = []
-        for u in users:
-            user_type = u.user_type.value if hasattr(u.user_type, 'value') else str(u.user_type)
-            user_profiles.append(
-                UserProfile(
-                    id=str(u.id),
-                    email=u.email,
-                    user_type=user_type,
-                    full_name=u.full_name,
-                    is_active=u.is_active,
-                    created_at=u.created_at
-                )
-            )
+        user_profiles = [
+            UserProfile.model_validate(u) for u in users
+        ]
             
         return PaginatedUserResponse(total=total, items=user_profiles)
 

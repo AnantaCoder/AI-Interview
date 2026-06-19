@@ -13,7 +13,7 @@ import bcrypt
 from app.config.settings import get_settings
 from app.config.logging import get_logger
 from app.db.session import get_session_maker
-from app.db.models.user import User, UserType
+from app.db.models.user import User
 from app.utils.security import (
     create_access_token,
     create_refresh_token,
@@ -50,8 +50,7 @@ class AuthService:
     def _build_tokens(self, user: User) -> TokenResponse:
         """Create an access + refresh token pair for *user*."""
         settings = get_settings()
-        user_type = user.user_type.value if isinstance(user.user_type, UserType) else str(user.user_type)
-        access = create_access_token(subject=str(user.id), user_type=user_type)
+        access = create_access_token(subject=str(user.id), user_type=user.user_type)
         refresh = create_refresh_token(subject=str(user.id))
         return TokenResponse(
             access_token=access,
@@ -62,23 +61,7 @@ class AuthService:
 
     @staticmethod
     def _user_to_profile(user: User) -> UserProfile:
-        user_type = user.user_type.value if isinstance(user.user_type, UserType) else str(user.user_type)
-        return UserProfile(
-            id=str(user.id),
-            email=user.email,
-            user_type=user_type,
-            full_name=user.full_name,
-            avatar_url=user.avatar_url,
-            email_confirmed_at=None,
-            address=user.address,
-            phone_number=user.phone_number,
-            is_active=user.is_active,
-            skills=user.skills,
-            job_role=user.job_role,
-            year_of_experience=user.year_of_experience,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-        )
+        return UserProfile.model_validate(user)
 
     # ── public API ────────────────────────────────────────────────
     async def sign_up(self, request: SignUpRequest) -> AuthResponse:

@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import text
 from typing import AsyncGenerator
 
@@ -8,7 +8,9 @@ from app.config.logging import get_logger
 
 logger = get_logger("db.session")
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    pass
 
 _engine = None
 _async_session_maker = None

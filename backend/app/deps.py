@@ -8,7 +8,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import select
 
 from app.db.session import get_session_maker
-from app.db.models.user import User, UserType
+from app.db.models.user import User
 from app.utils.security import verify_access_token
 from app.schemas.auth import UserProfile
 from app.config.logging import get_logger
@@ -54,16 +54,7 @@ async def get_current_user(
             detail="User not found",
         )
 
-    user_type = user.user_type.value if isinstance(user.user_type, UserType) else str(user.user_type)
-    return UserProfile(
-        id=str(user.id),
-        email=user.email,
-        user_type=user_type,
-        full_name=user.full_name,
-        avatar_url=user.avatar_url,
-        created_at=user.created_at,
-        updated_at=user.updated_at,
-    )
+    return UserProfile.model_validate(user)
 
 
 async def get_current_user_optional(
