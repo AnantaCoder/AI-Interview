@@ -16,17 +16,17 @@ from app.routers import (
 api_router = APIRouter()
 settings = get_settings()
 
-# mother of all routes :  Include all sub-routers with the /api prefix
-api_router.include_router(health.router, prefix="/api")
-api_router.include_router(auth.router, prefix="/api")
-api_router.include_router(resume.router, prefix="/api")
-api_router.include_router(ats.router, prefix="/api")
-api_router.include_router(campaign.router, prefix="/api")
-api_router.include_router(candidate.router, prefix="/api")
-api_router.include_router(organization.router, prefix="/api")
-api_router.include_router(admin.router, prefix="/api")
-api_router.include_router(interview.router, prefix="/api")
-api_router.include_router(proctoring.router, prefix="/api")
+# mother of all routes :  Include all sub-routers with the /api/v1 prefix
+api_router.include_router(health.router, prefix="/api/v1")
+api_router.include_router(auth.router, prefix="/api/v1")
+api_router.include_router(resume.router, prefix="/api/v1")
+api_router.include_router(ats.router, prefix="/api/v1")
+api_router.include_router(campaign.router, prefix="/api/v1")
+api_router.include_router(candidate.router, prefix="/api/v1")
+api_router.include_router(organization.router, prefix="/api/v1")
+api_router.include_router(admin.router, prefix="/api/v1")
+api_router.include_router(interview.router, prefix="/api/v1")
+api_router.include_router(proctoring.router, prefix="/api/v1")
 
 
 @api_router.get("/", summary="Root endpoint", description="API root with welcome message")
