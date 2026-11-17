@@ -19,11 +19,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -r requirements.txt
-
-# Pre-download NLTK data required by resume analysis
-RUN python -m nltk.downloader punkt_tab stopwords
 
 # Copy backend files (app, classifier_model, yolov8n.pt, etc.)
 COPY . .
