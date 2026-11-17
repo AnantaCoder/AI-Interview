@@ -29,7 +29,14 @@ def get_database_url() -> tuple[str, dict]:
         sslmode as a query parameter).
     """
     settings = get_settings()
-    database_url = settings.database_url
+    database_url = (settings.database_url or "").strip().strip('"').strip("'")
+
+    # Clean common copy-paste artifacts
+    if database_url.startswith("DATABASE_URL="):
+        database_url = database_url.replace("DATABASE_URL=", "", 1).strip().strip('"').strip("'")
+    if database_url.startswith("psql "):
+        database_url = database_url.replace("psql ", "", 1).strip().strip('"').strip("'")
+
     connect_args: dict = {}
 
     # SQLite
@@ -56,6 +63,10 @@ def get_database_url() -> tuple[str, dict]:
     # Disable prepared statement cache for connection poolers (Supabase PgBouncer / Supavisor)
     connect_args["statement_cache_size"] = 0
 
+    # Ensure SSL is enabled for remote cloud databases if not already specified
+    if "ssl" not in connect_args and any(h in database_url for h in ["supabase", "neon.tech", "pooler"]):
+        connect_args["ssl"] = "require"
+
     return database_url, connect_args
 
 
@@ -66,12 +77,16 @@ def get_engine():
         database_url, connect_args = get_database_url()
         is_sqlite = "sqlite" in database_url
 
-        _engine = create_async_engine(
-            database_url,
-            echo=settings.debug,
-            pool_pre_ping=not is_sqlite,
-            connect_args=connect_args,
-        )
+        try:
+            _engine = create_async_engine(
+                database_url,
+                echo=settings.debug,
+                pool_pre_ping=not is_sqlite,
+                connect_args=connect_args,
+            )
+        except Exception as e:
+            logger.error(f"Failed to create database engine. URL prefix: {database_url[:12]}... Length: {len(database_url)}. Error: {e}")
+            raise
         # Log only the host portion for security
         if "@" in database_url:
             safe_url = database_url.split("@")[-1]
