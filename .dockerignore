@@ -1,0 +1,13 @@
+backend/env/
+backend/venv/
+backend/.venv/
+**/__pycache__/
+**/*.pyc
+backend/ai_interview.db
+backend/.env
+.git/
+paper/
+video_analysis_for_cheating_detection/
+machine_learning/
+Resume Classsifier/
+
