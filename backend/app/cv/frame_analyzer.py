@@ -57,8 +57,13 @@ def _get_yolo():
     global _yolo_model
     if _yolo_model is None:
         from ultralytics import YOLO
-        _yolo_model = YOLO("yolov8n.pt")
-        logger.info("YOLOv8n model initialized")
+        import os
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        model_path = os.path.join(base_dir, "yolov8n.pt")
+        if not os.path.exists(model_path):
+            model_path = "yolov8n.pt"
+        _yolo_model = YOLO(model_path)
+        logger.info(f"YOLOv8n model initialized from {model_path}")
     return _yolo_model
 
 
