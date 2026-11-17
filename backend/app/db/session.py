@@ -53,6 +53,9 @@ def get_database_url() -> tuple[str, dict]:
         import re
         database_url = re.sub(r"[?&]sslmode=[^&]*", "", database_url)
 
+    # Disable prepared statement cache for connection poolers (Supabase PgBouncer / Supavisor)
+    connect_args["statement_cache_size"] = 0
+
     return database_url, connect_args
 
 
